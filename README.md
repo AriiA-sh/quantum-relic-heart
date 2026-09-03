@@ -1,12 +1,11 @@
 <div align="center">
-  <h1>🫀 The Quantum Relic Heart</h1>
-  <p><b>Artifact #02 of The Translucent Necro-Codex</b></p>
-  
-  [![Live Demo](https://img.shields.io/badge/Live_Demo-Play_Now-00FFFF?style=for-the-badge&logo=vercel)](https://ariia-sh.github.io/quantum-relic-heart) 
-  [![Mint on Objkt](https://img.shields.io/badge/Objkt-View_Collection-FF143C?style=for-the-badge&logo=tezos)](https://objkt.com/tokens/KT1ULWdFZdGEipxF4TWNYiZVen8JBapHGDro/4?ref=tz2PHxa825dbphYFicd2Yq92favhdstoQ1js)
-
-  <br>
-  <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjEx.../giphy.gif" width="600" alt="Quantum Relic Heart">
+  <a href="https://ariia-sh.github.io/quantum-relic-heart">
+    <img src="https://img.shields.io/badge/Live_Demo-Play_Now-00FFFF?style=for-the-badge&logo=vercel" alt="Live Demo">
+  </a>
+  &nbsp;&nbsp;
+  <a href="https://objkt.com/tokens/KT1ULWdFZdGEipxF4TWNYiZVen8JBapHGDro/4?ref=tz2PHxa825dbphYFicd2Yq92favhdstoQ1js">
+    <img src="https://img.shields.io/badge/Objkt-View_Collection-FF143C?style=for-the-badge&logo=tezos" alt="Mint on Objkt">
+  </a>
 </div>
 
 ---
