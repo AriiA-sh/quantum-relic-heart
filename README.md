@@ -1,6 +1,6 @@
 # 🫀 The Quantum Relic Heart
 
-برای دیدن این پروژه به صورت زنده و تعاملی، روی لینک زیر کلیک کنید:
+
 
 🔗 **[ (Live Demo)](https://ariia-sh.github.io/quantum-relic-heart/index.html)**
 
