@@ -30,5 +30,5 @@ Built without external libraries, utilizing pure mathematical projection and nat
 ---
 <div align="center">
   <p><i>"Flesh decays. Code remains."</i></p>
-  <p>Crafted by <b>Aria Shabani Lichaei</b></p>
+  <p>Crafted by <b>Aria Shabani</b></p>
 </div>
