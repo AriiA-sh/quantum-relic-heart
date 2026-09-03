@@ -2,7 +2,7 @@
 
 برای دیدن این پروژه به صورت زنده و تعاملی، روی لینک زیر کلیک کنید:
 
-🔗 **[اجرای زنده پروژه روی مرورگر (Live Demo)](https://ariia-sh.github.io/quantum-relic-heart)**
+🔗 **[اجرای زنده پروژه روی مرورگر (Live Demo)](https://ariia-sh.github.io/quantum-relic-heart/index.html)**
 
 ---
 
