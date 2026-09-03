@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<title>The Quantum Relic Heart - The Masterpiece</title>
+<style>
+  :root {
+    --bg: #030005;
+    --red-glow: rgba(255, 20, 60, 0.6);
+    --cyan-glow: rgba(0, 255, 255, 0.8);
+    --magenta-glow: rgba(255, 0, 255, 0.9);
+    --text-dim: #555;
+    --text-bright: #eee;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+  html, body { width: 100%; height: 100%; background: var(--bg); overflow: hidden; font-family: 'Courier New', monospace; color: var(--text-bright); }
+
+  body::after {
+    content: ""; position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 1px, transparent 1px, transparent 3px);
+    pointer-events: none; z-index: 10;
+  }
+
+  .frame { position: relative; width: 100vw; height: 100vh; display: flex; flex-direction: column; }
+
+  .hud-container { position: absolute; inset: 0; pointer-events: none; z-index: 11; display: flex; flex-direction: column; justify-content: space-between; padding: 25px; }
+  .header { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-dim); border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 12px; }
+  .header b { color: #ff143c; text-shadow: 0 0 10px var(--red-glow); transition: 0.3s; letter-spacing: 1px; }
+  
+  .footer { display: flex; justify-content: space-between; font-size: 11px; align-items: flex-end; }
+  .status-box { background: rgba(10, 0, 15, 0.7); border: 1px solid rgba(255,20,60,0.2); border-left: 3px solid #ff143c; padding: 15px 20px; backdrop-filter: blur(8px); transition: 0.3s; }
+  .data-line { margin-bottom: 8px; letter-spacing: 0.5px; }
+  .data-line span { color: var(--text-dim); }
+  
+  .warning-text { display: none; color: #0ff; font-weight: bold; animation: glitch-text 0.1s infinite; text-shadow: 0 0 15px var(--cyan-glow); margin-top: 10px; font-size: 12px; }
+  .audio-hint { color: #ff143c; animation: pulse-opacity 2s infinite; font-weight: bold; margin-bottom: 8px; font-size: 12px; }
+
+  .viewport { position: absolute; inset: 0; z-index: 5; cursor: grab; display: flex; align-items: center; justify-content: center; transform: translateZ(0); }
+  .viewport:active { cursor: grabbing; }
+  
+  canvas#art {
+    display: block; width: 100%; height: 100%;
+    filter: drop-shadow(0 0 8px rgba(255, 20, 60, 0.3));
+    will-change: transform, filter;
+  }
+
+  /* Shock State */
+  body.shock-state .status-box { border-left-color: #0ff; border-color: rgba(0,255,255,0.4); box-shadow: -5px 0 25px var(--cyan-glow); background: rgba(0, 15, 25, 0.85); }
+  body.shock-state .header b { color: #0ff; text-shadow: 0 0 15px var(--cyan-glow); }
+  body.shock-state .warning-text { display: block; }
+  body.shock-state canvas#art { 
+    filter: drop-shadow(5px 0 0 rgba(255,0,0,0.8)) drop-shadow(-5px 0 0 rgba(0,255,255,0.8)); 
+  }
+  body.shock-state { animation: screen-shake 0.12s infinite; }
+
+  @keyframes screen-shake { 0% { transform: translate(0, 0); } 25% { transform: translate(-2px, 1px); } 50% { transform: translate(1px, -2px); } 75% { transform: translate(-1px, 2px); } 100% { transform: translate(0, 0); } }
+  @keyframes glitch-text { 0% { opacity: 1; transform: translateX(0); } 50% { opacity: 0.7; transform: translateX(-3px); } 100% { opacity: 1; transform: translateX(3px); } }
+  @keyframes pulse-opacity { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="hud-container">
+    <div class="header">
+      <div>PROJECT: <b class="scramble" data-text="THE TRANSLUCENT NECRO-CODEX">THE TRANSLUCENT NECRO-CODEX</b> // ARTIFACT: #02</div>
+      <div>CORE STATUS: <span id="coreStatus" class="scramble" style="color: #fff;" data-text="CONTAINED">CONTAINED</span></div>
+    </div>
+    
+    <div class="footer">
+      <div class="status-box">
+        <div class="data-line"><span>BPM:</span> <b id="bpmUI">60.0</b></div>
+        <div class="data-line"><span>VOL:</span> <span class="scramble" data-text="3800 PARTICLES + GEOMETRIC RELIC">3800 PARTICLES + GEOMETRIC RELIC</span></div>
+        <div class="data-line"><span>ROT:</span> [<span id="rotUI">0.00, 0.00</span>]</div>
+        <div class="warning-text">>> STRUCTURAL INTEGRITY COMPROMISED <<</div>
+      </div>
+      <div style="text-align: right; color: #555;">
+        <div class="audio-hint scramble" id="audioHint" data-text="[AUDIO OFF] CLICK TO WAKE ENGINE">[AUDIO OFF] CLICK TO WAKE ENGINE</div>
+        [DRAG] TO ROTATE VOLUME<br>
+        [HOLD CLICK] TO SHATTER SHELL
+      </div>
+    </div>
+  </div>
+  <div class="viewport" id="viewport">
+    <canvas id="art"></canvas>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // --- Terminal Boot Sequence ---
+  const decipherChars = '01#@%&<>*^?+!アミシク死術心';
+  function scrambleText(element, newText) {
+    let iters = 0;
+    if(element.scrambleInterval) clearInterval(element.scrambleInterval);
+    element.scrambleInterval = setInterval(() => {
+      let str = '';
+      for(let i = 0; i < newText.length; i++) {
+        if(i < iters - 6) str += newText[i]; 
+        else str += decipherChars[Math.floor(Math.random() * decipherChars.length)];
+      }
+      element.innerHTML = str;
+      iters++;
+      if(iters > newText.length + 6) {
+        element.innerHTML = newText;
+        clearInterval(element.scrambleInterval);
+      }
+    }, 40);
+  }
+
+  document.querySelectorAll('.scramble').forEach(el => scrambleText(el, el.getAttribute('data-text')));
+
+  const canvas = document.getElementById('art');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  let W, H;
+  
+  let isDragging = false, isShocked = false;
+  let lastX = 0, lastY = 0;
+  let camRotX = 0.2, camRotY = -0.5; 
+  let autoRotateY = 0.002;
+  
+  let currentBPM = 60, targetBPM = 60;
+  let timeInBeats = 0, lastTimeBeatInt = 0;
+  
+  // Vector Shattering Logic
+  let shatterPower = 0;
+  let targetShatter = 0;
+
+  // --- Cinematic Audio Engine ---
+  let audioCtx = null, masterCompressor = null, audioInitialized = false;
+
+  function initAudio() {
+    if (!audioInitialized) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      masterCompressor = audioCtx.createDynamicsCompressor();
+      masterCompressor.threshold.setValueAtTime(-15, audioCtx.currentTime);
+      masterCompressor.knee.setValueAtTime(30, audioCtx.currentTime);
+      masterCompressor.ratio.setValueAtTime(12, audioCtx.currentTime);
+      masterCompressor.connect(audioCtx.destination);
+
+      audioInitialized = true;
+      let hint = document.getElementById('audioHint');
+      hint.style.color = "#0ff";
+      scrambleText(hint, "[AUDIO ON] LOUD SYNTH ENGINE ACTIVE");
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function scheduleThump(time, freqStart, freqEnd, duration, volume) {
+    if (!audioCtx) return;
+    const subOsc = audioCtx.createOscillator();
+    const subGain = audioCtx.createGain();
+    subOsc.type = 'sine';
+    subOsc.frequency.setValueAtTime(freqStart, time);
+    subOsc.frequency.exponentialRampToValueAtTime(freqEnd, time + duration);
+    subGain.gain.setValueAtTime(0, time);
+    subGain.gain.linearRampToValueAtTime(volume, time + 0.02);
+    subGain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+    subOsc.connect(subGain); subGain.connect(masterCompressor);
+    subOsc.start(time); subOsc.stop(time + duration + 0.1);
+
+    const punchOsc = audioCtx.createOscillator();
+    const punchGain = audioCtx.createGain();
+    punchOsc.type = 'triangle';
+    punchOsc.frequency.setValueAtTime(freqStart * 1.5, time);
+    punchOsc.frequency.exponentialRampToValueAtTime(freqEnd * 1.5, time + duration);
+    punchGain.gain.setValueAtTime(0, time);
+    punchGain.gain.linearRampToValueAtTime(volume * 0.5, time + 0.01);
+    punchGain.gain.exponentialRampToValueAtTime(0.001, time + duration * 0.6);
+    punchOsc.connect(punchGain); punchGain.connect(masterCompressor);
+    punchOsc.start(time); punchOsc.stop(time + duration + 0.1);
+  }
+
+  function playHeartbeat() {
+    if (!audioCtx) return;
+    let now = audioCtx.currentTime;
+    if (isShocked) {
+      scheduleThump(now, 150, 30, 0.15, 2.5);        
+      scheduleThump(now + 0.15, 170, 35, 0.15, 2.0); 
+    } else {
+      scheduleThump(now, 90, 20, 0.35, 3.0);          
+      scheduleThump(now + 0.25, 100, 25, 0.35, 1.8);  
+    }
+  }
+
+  window.addEventListener('mousedown', initAudio);
+  window.addEventListener('touchstart', initAudio, {passive: true});
+
+  function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function startDrag(x, y) { 
+    isDragging = true; lastX = x; lastY = y; 
+    isShocked = true; document.body.classList.add('shock-state'); 
+    targetBPM = 185; targetShatter = 200; 
+    scrambleText(document.getElementById('coreStatus'), "CRITICAL MASS");
+  }
+  function endDrag() { 
+    isDragging = false; isShocked = false; 
+    document.body.classList.remove('shock-state'); 
+    targetBPM = 60; targetShatter = 0; 
+    scrambleText(document.getElementById('coreStatus'), "CONTAINED");
+  }
+  function moveDrag(x, y) {
+    if (!isDragging) return;
+    camRotY += (x - lastX) * 0.005;
+    camRotX += (y - lastY) * 0.005;
+    camRotX = Math.max(-1.5, Math.min(1.5, camRotX));
+    lastX = x; lastY = y;
+    if (Math.random() > 0.5) document.getElementById('rotUI').textContent = `${camRotX.toFixed(2)}, ${camRotY.toFixed(2)}`;
+  }
+
+  window.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
+  window.addEventListener('mouseup', endDrag);
+  window.addEventListener('mousemove', (e) => moveDrag(e.clientX, e.clientY));
+  window.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientX, e.touches[0].clientY), {passive: false});
+  window.addEventListener('touchend', endDrag);
+  window.addEventListener('touchmove', (e) => moveDrag(e.touches[0].clientX, e.touches[0].clientY), {passive: true});
+
+  // --- 1. Generate Organic Heart Shell ---
+  const points = [];
+  const P_COUNT = 3800; 
+  const chars = ['0', '1', '1', '0', ':', '.', '+', '死', '術'];
+  const neuralNodes = []; 
+
+  let generated = 0;
+  while(generated < P_COUNT) {
+    let x = (Math.random() - 0.5) * 3;
+    let y = (Math.random() - 0.5) * 3;
+    let z = (Math.random() - 0.5) * 3;
+    let val = Math.pow(x*x + 2.25*y*y + z*z - 1, 3) - (x*x * z*z*z) - (0.1125 * y*y * z*z*z);
+    
+    // Hollow out the heart to create space for the Relic
+    if(val <= 0 && val > -0.6) {
+      let ox = x * 120, oy = -z * 120, oz = y * 120;
+      let dist = Math.sqrt(ox*ox + oy*oy + oz*oz);
+      
+      points.push({
+        ox: ox, oy: oy, oz: oz,
+        nx: ox / dist, ny: oy / dist, nz: oz / dist, // Normal vector for shattering
+        char: chars[Math.floor(Math.random() * chars.length)]
+      });
+      if (generated % 35 === 0) neuralNodes.push(generated);
+      generated++;
+    }
+  }
+
+  // --- 2. Geometric Core (The Relic) Definitions ---
+  // Outer Diamond (Octahedron)
+  const coreOcta = [
+    [0, -45, 0], [0, 45, 0], [-45, 0, 0], [45, 0, 0], [0, 0, -45], [0, 0, 45]
+  ];
+  const octaEdges = [[0,2],[0,3],[0,4],[0,5], [1,2],[1,3],[1,4],[1,5], [2,4],[4,3],[3,5],[5,2]];
+  
+  // Inner Hyper-Cube
+  const s = 18;
+  const coreCube = [
+    [-s,-s,-s], [s,-s,-s], [s,s,-s], [-s,s,-s],
+    [-s,-s,s],  [s,-s,s],  [s,s,s],  [-s,s,s]
+  ];
+  const cubeEdges = [
+    [0,1],[1,2],[2,3],[3,0], [4,5],[5,6],[6,7],[7,4], [0,4],[1,5],[2,6],[3,7]
+  ];
+
+  const dust = Array.from({length: 60}, () => ({
+    x: Math.random() * 2000, y: Math.random() * 2000,
+    size: Math.random() * 2 + 0.5, speed: Math.random() * 0.5 + 0.2,
+    alpha: Math.random() * 0.5 + 0.1, phase: Math.random() * Math.PI * 2
+  }));
+
+  const renderData = new Float32Array(P_COUNT * 5); 
+  const indices = new Int32Array(P_COUNT);
+  let lastRealTime = performance.now();
+
+  // Helper for 3D Geometry Projection
+  function projectGeometry(vertices, rotX, rotY, rotZ, baseScale, camCosX, camSinX, camCosY, camSinY, focal) {
+    let proj = [];
+    let cx = Math.cos(rotX), sx = Math.sin(rotX);
+    let cy = Math.cos(rotY), sy = Math.sin(rotY);
+    let cz = Math.cos(rotZ), sz = Math.sin(rotZ);
+    for(let v of vertices) {
+        let x1 = v[0]*cz - v[1]*sz, y1 = v[0]*sz + v[1]*cz;
+        let y2 = y1*cx - v[2]*sx, z1 = y1*sx + v[2]*cx;
+        let x2 = x1*cy + z1*sy, z2 = -x1*sy + z1*cy;
+        x2 *= baseScale; y2 *= baseScale; z2 *= baseScale;
+        let rx1 = x2 * camCosY + z2 * camSinY;
+        let rz1 = z2 * camCosY - x2 * camSinY;
+        let ry2 = y2 * camCosX - rz1 * camSinX;
+        let rz2 = rz1 * camCosX + y2 * camSinX;
+        let projScale = focal / (focal + rz2 + 200);
+        proj.push({ x: (W/2) + rx1*projScale, y: (H/2) + ry2*projScale, z: rz2, scale: projScale });
+    }
+    return proj;
+  }
+
+  function frame(now) {
+    let dt = Math.min((now - lastRealTime) / 1000, 0.05); 
+    lastRealTime = now;
+    
+    currentBPM += (targetBPM - currentBPM) * 0.05;
+    shatterPower += (targetShatter - shatterPower) * 0.1; 
+    if (Math.random() > 0.7) document.getElementById('bpmUI').textContent = currentBPM.toFixed(1);
+    
+    timeInBeats += dt * (currentBPM / 60);
+    let currentBeatInt = Math.floor(timeInBeats);
+    
+    if (currentBeatInt > lastTimeBeatInt) { playHeartbeat(); lastTimeBeatInt = currentBeatInt; }
+    if (!isShocked) camRotY += autoRotateY;
+
+    let pulsePhase = timeInBeats * Math.PI * 2;
+    let beat = Math.pow(Math.sin(pulsePhase), 8) + Math.pow(Math.sin(pulsePhase + 0.4), 8) * 0.5;
+    let heartScale = 1.0 + (beat * 0.15) + (isShocked ? Math.random() * 0.05 : 0);
+    const focal = Math.min(W, H) * 0.8;
+
+    ctx.fillStyle = '#030005';
+    ctx.fillRect(0, 0, W, H);
+
+    // Radial Glow
+    let gSize = Math.max(W, H) * 0.6;
+    let grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, gSize);
+    let gAlpha = isShocked ? (0.3 + beat * 0.3) : (0.05 + beat * 0.15);
+    grad.addColorStop(0, isShocked ? `rgba(0, 255, 255, ${gAlpha})` : `rgba(255, 20, 60, ${gAlpha})`);
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad; ctx.fillRect(W/2 - gSize, H/2 - gSize, gSize * 2, gSize * 2);
+
+    // Runic Rings
+    ctx.save(); ctx.translate(W/2, H/2);
+    let ringAlpha = isShocked ? 0.6 : 0.15;
+    let ringColor = isShocked ? `rgba(0, 255, 255, ${ringAlpha})` : `rgba(255, 20, 60, ${ringAlpha})`;
+    ctx.rotate(timeInBeats * 0.15); ctx.beginPath(); ctx.arc(0, 0, focal * 0.75, 0, Math.PI * 2);
+    ctx.strokeStyle = ringColor; ctx.lineWidth = 1; ctx.setLineDash([4, 12, 40, 12]); ctx.stroke();
+    ctx.rotate(-timeInBeats * 0.3); ctx.beginPath(); ctx.arc(0, 0, focal * 0.65, 0, Math.PI * 2);
+    ctx.setLineDash([2, 8]); ctx.lineWidth = 2; ctx.stroke();
+    ctx.restore();
+
+    // Calculate Heart Particles Projection
+    const cosX = Math.cos(camRotX), sinX = Math.sin(camRotX);
+    const cosY = Math.cos(camRotY), sinY = Math.sin(camRotY);
+
+    for (let i = 0; i < P_COUNT; i++) {
+      let p = points[i];
+      // Fluid Ripples on surface
+      let ripple = Math.sin(p.ox * 0.05 + timeInBeats * 3) * Math.cos(p.oy * 0.05 + timeInBeats * 3) * (isShocked ? 0 : 8);
+      let px = (p.ox + p.nx * (ripple + shatterPower)) * heartScale;
+      let py = (p.oy + p.ny * (ripple + shatterPower)) * heartScale;
+      let pz = (p.oz + p.nz * (ripple + shatterPower)) * heartScale;
+
+      let rx1 = px * cosY + pz * sinY;
+      let rz1 = pz * cosY - px * sinY;
+      let ry2 = py * cosX - rz1 * sinX;
+      let rz2 = rz1 * cosX + py * sinX;
+
+      let projScale = focal / (focal + rz2 + 200);
+      
+      let rIdx = i * 5;
+      renderData[rIdx] = (W/2) + rx1 * projScale;
+      renderData[rIdx + 1] = (H/2) + ry2 * projScale;
+      renderData[rIdx + 2] = rz2;
+      renderData[rIdx + 3] = projScale;
+      renderData[rIdx + 4] = i;
+      indices[i] = i;
+    }
+
+    // Sort Heart Particles by Depth
+    indices.sort((a, b) => renderData[b * 5 + 2] - renderData[a * 5 + 2]);
+
+    // Project Core Geometry
+    let crX = timeInBeats * 1.5 + (isShocked ? timeInBeats * 4 : 0);
+    let crY = -timeInBeats * 1.0 - (isShocked ? timeInBeats * 6 : 0);
+    let crZ = timeInBeats * 0.5;
+    let projOcta = projectGeometry(coreOcta, crX, crY, crZ, heartScale, cosX, sinX, cosY, sinY, focal);
+    let projCube = projectGeometry(coreCube, -crX*1.2, crY*1.5, -crZ, heartScale, cosX, sinX, cosY, sinY, focal);
+
+    // --- Draw Loop (Z-Sorted) ---
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    let currentFont = "", currentFill = "", currentAlpha = -1;
+    let coreDrawn = false;
+
+    // Draw Function for Geometric Core
+    function drawCore() {
+        ctx.save();
+        ctx.lineJoin = 'round';
+        ctx.shadowColor = '#00ffff';
+        
+        // Draw Outer Octahedron
+        ctx.lineWidth = isShocked ? 4 : 1.5;
+        ctx.strokeStyle = isShocked ? '#ffffff' : '#00ffff';
+        ctx.shadowBlur = isShocked ? 30 : 15;
+        ctx.beginPath();
+        for(let e of octaEdges) {
+            ctx.moveTo(projOcta[e[0]].x, projOcta[e[0]].y);
+            ctx.lineTo(projOcta[e[1]].x, projOcta[e[1]].y);
+        }
+        ctx.stroke();
+
+        // Draw Inner Cube
+        ctx.lineWidth = isShocked ? 2 : 1;
+        ctx.strokeStyle = '#00ffff';
+        ctx.shadowBlur = isShocked ? 20 : 10;
+        ctx.beginPath();
+        for(let e of cubeEdges) {
+            ctx.moveTo(projCube[e[0]].x, projCube[e[0]].y);
+            ctx.lineTo(projCube[e[1]].x, projCube[e[1]].y);
+        }
+        ctx.stroke();
+        
+        // Center Energy Mass
+        ctx.beginPath();
+        let centerScale = focal / (focal + 200);
+        ctx.arc(W/2, H/2, (isShocked ? 15 : 6) * centerScale, 0, Math.PI*2);
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowBlur = isShocked ? 50 : 20;
+        ctx.fill();
+        ctx.restore();
+    }
+
+    for (let i = 0; i < P_COUNT; i++) {
+      let idx = indices[i] * 5;
+      let x = renderData[idx];
+      let y = renderData[idx + 1];
+      let pZ = renderData[idx + 2];
+      let scale = renderData[idx + 3];
+      
+      // Inject Geometric Core in the middle of depth sorting (Z ~ 0)
+      if (!coreDrawn && pZ < 0) {
+          drawCore();
+          coreDrawn = true;
+          // Reset context states after drawing core
+          currentFont = ""; currentFill = ""; currentAlpha = -1;
+      }
+
+      let alpha = Math.max(0.05, Math.min(1, scale * 1.5));
+      if (isShocked) alpha *= 0.4; // Fade shell during shatter
+      alpha = Math.round(alpha * 20) / 20; 
+      if (alpha !== currentAlpha) { ctx.globalAlpha = alpha; currentAlpha = alpha; }
+
+      let originalIdx = renderData[idx + 4];
+      let colorStr = isShocked ? (originalIdx % 3 === 0 ? '#0ff' : '#f0f') : `rgb(${60 + beat * 60}, 10, 20)`;
+      if (colorStr !== currentFill) { ctx.fillStyle = colorStr; currentFill = colorStr; }
+
+      if (scale < 0.6) {
+          ctx.fillRect(x, y, scale * 3, scale * 3);
+      } else {
+          let fontSize = Math.max(8, Math.round(12 * scale));
+          let fontStr = `bold ${fontSize}px monospace`;
+          if (fontStr !== currentFont) { ctx.font = fontStr; currentFont = fontStr; }
+          let char = points[originalIdx].char;
+          if (Math.random() < 0.01) char = Math.random() > 0.5 ? '1' : '0';
+          ctx.fillText(char, x, y);
+      }
+    }
+    
+    if(!coreDrawn) drawCore(); // Fallback
+
+    // Cinematic Dust
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = isShocked ? '#0ff' : '#ff143c';
+    for(let i = 0; i < dust.length; i++) {
+       let d = dust[i];
+       d.y -= d.speed * (isShocked ? 6 : 1);
+       if(d.y < 0) { d.y = H; d.x = Math.random() * W; }
+       let sway = Math.sin(timeInBeats * 2 + d.phase) * 10;
+       ctx.globalAlpha = d.alpha * (0.2 + beat * 0.6);
+       ctx.beginPath(); ctx.arc(d.x + sway, d.y, d.size, 0, Math.PI*2); ctx.fill();
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
+////// enjoy sheeessshhh //////
